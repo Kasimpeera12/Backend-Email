@@ -1,20 +1,18 @@
-// Import dependencies
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-require('dotenv').config();  // Load environment variables from .env file
-const emailRoutes = require('./routes/emailRoutes');  // Ensure this path is correct
+require('dotenv').config();
+const emailRoutes = require('./routes/emailRoutes');
 
-// Initialize app
 const app = express();
 
 // Middleware
-app.use(cors());  // Enable Cross-Origin Resource Sharing (CORS)
-app.use(bodyParser.json());  // Parse incoming requests with JSON payload
+app.use(cors());
+app.use(bodyParser.json());
 
 // Log MongoDB URI for debugging
-console.log("MongoDB URI:", process.env.MONGO_URI);  // This will help debug
+console.log("MongoDB URI:", process.env.MONGO_URI);
 
 // API Routes
 app.use('/api', emailRoutes);
@@ -24,7 +22,7 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   .then(() => console.log('MongoDB connected successfully'))
   .catch(err => {
     console.error('MongoDB connection error:', err);
-    process.exit(1);  // Exit process if unable to connect to MongoDB
+    process.exit(1);
   });
 
 // Start the server

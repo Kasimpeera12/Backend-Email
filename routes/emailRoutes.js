@@ -58,11 +58,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Send Email
+// Send Email to Many Recipients
 router.post('/send-email', async (req, res) => {
   const { from, to, subject, body, emailPassword } = req.body;
 
   try {
+    // Ensure `to` is an array of email addresses
+    if (!Array.isArray(to) || to.length === 0) {
+      return res.status(400).json({ error: '`to` must be a non-empty array of email addresses' });
+    }
+
     // Find the user by the `from` email address
     const user = await User.findOne({ email: from });
 
@@ -86,27 +91,31 @@ router.post('/send-email', async (req, res) => {
       },
     });
 
-    // Send the email
-    await transporter.sendMail({
-      from,
-      to,
-      subject,
-      text: body,
-    });
+    // Send emails to each recipient
+    const emailPromises = to.map(recipient =>
+      transporter.sendMail({
+        from,
+        to: recipient,
+        subject,
+        text: body,
+      })
+    );
 
-    // Save the email data to MongoDB
-    const email = new Email({
+    await Promise.all(emailPromises); // Wait for all emails to be sent
+
+    // Save the email data to MongoDB for each recipient
+    const emailDocs = to.map(recipient => ({
       from,
-      to,
+      to: recipient,
       subject,
       body,
-    });
+    }));
 
-    await email.save();
+    await Email.insertMany(emailDocs);
 
-    res.json({ message: 'Email sent and saved successfully' });
+    res.json({ message: 'Emails sent and saved successfully' });
   } catch (err) {
-    console.error("Error:", err); // Debugging
+    console.error('Error:', err); // Debugging
     res.status(500).json({ error: 'Email sending failed', details: err.message });
   }
 });
